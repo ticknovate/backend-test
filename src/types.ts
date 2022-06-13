@@ -34,7 +34,7 @@ export interface IBankAccount {
   openedAt: number
 }
 
-interface IBankAccountTransaction {
+export interface IBankAccountTransaction {
   /**
    * The type of the transaction.
    */
@@ -60,6 +60,12 @@ interface IBankAccountTransaction {
  */
 export type BankAccountEvent = BankAccountEventBase & IBankAccountEventShared
 
+export type BankAccountMoneyEvent = BankAccountMoneyEventBase &
+  IBankAccountEventShared
+
+export type BankAccountOpenEvent = IAccountOpenedEventBase &
+  IBankAccountEventShared
+
 /**
  * A "bank account" event.
  *
@@ -68,6 +74,10 @@ export type BankAccountEvent = BankAccountEventBase & IBankAccountEventShared
  */
 export type BankAccountEventBase =
   | IAccountOpenedEventBase
+  | IMoneyDebitedEventBase
+  | IMoneyCreditedEventBase
+
+type BankAccountMoneyEventBase =
   | IMoneyDebitedEventBase
   | IMoneyCreditedEventBase
 

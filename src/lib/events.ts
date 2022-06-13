@@ -17,13 +17,37 @@ import type { BankAccountEvent } from '../types'
 export async function loadEvents(
   accountId: string
 ): Promise<BankAccountEvent[]> {
-  return []
+  const directoryPath = path.join(__dirname, '../../events', accountId)
+  try {
+    await fs.access(directoryPath)
+    const listOfFiles = await fs.readdir(directoryPath)
+    const accountEvents = await Promise.all(
+      listOfFiles.map(async (file) => {
+        const filepath = path.join(directoryPath, file)
+        const fileContents = await fs.readFile(filepath)
+        return JSON.parse(fileContents.toString())
+      })
+    )
+
+    return accountEvents
+  } catch (err) {
+    return Promise.reject(
+      new AppError(
+        404,
+        `Either directory ${directoryPath} does not exist or the user does not have access`
+      )
+    )
+  }
 }
 
 /**
  * Saves new events.
  */
-export async function saveEvents(events: BankAccountEvent[]) {
+export async function saveEvents(
+  events: BankAccountEvent[],
+  overwrite: boolean = false
+) {
+  const overwriteFlag = overwrite ? 'w' : 'wx'
   await Promise.all(
     events.map(async (event) => {
       const filepath = path.join(
@@ -34,8 +58,7 @@ export async function saveEvents(events: BankAccountEvent[]) {
       )
       console.log('Writing new event to', filepath)
       await fs.writeFile(filepath, JSON.stringify(event, null, 2), {
-        // Fail if the file already exists
-        flag: 'wx',
+        flag: overwriteFlag,
       })
     })
   )
