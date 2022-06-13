@@ -1,7 +1,12 @@
 import express from 'express'
 import { expressErrorHandler } from './lib/errorHandling'
 import { loadEvents, saveEvents } from './lib/events'
-import { accountOpenedEvent } from './shared/utils'
+import {
+  accountOpenedEvent,
+  formattedMoneyEvents,
+  moneyCreditedEvents,
+  moneyDebitedEvents,
+} from './shared/utils'
 import { IBankAccount } from './types'
 
 export const app = express()
@@ -35,8 +40,31 @@ app.get('/accounts/:id', async (req, res, next) => {
     // Take a look at the function and complete the implementation.
     const events = await loadEvents(req.params.id)
 
-    // @ts-expect-error: Derive the state of the account from `events`
-    const account: IBankAccount = { message: 'Not yet implemented.' }
+    const accountOpenedItem = accountOpenedEvent(events)
+    const creditTransactions = moneyCreditedEvents(events)
+    const debitTransactions = moneyDebitedEvents(events)
+
+    const creditAmount = creditTransactions
+      .map((trans) => trans.value)
+      .reduce((val1, val2) => val1 + val2)
+
+    const debitAmount = debitTransactions
+      .map((trans) => trans.value)
+      .reduce((val1, val2) => val1 + val2)
+
+    const transactionEvents = formattedMoneyEvents(
+      creditTransactions.concat(debitTransactions)
+    )
+
+    const account: IBankAccount = {
+      status: 'open',
+      accountId: req.params.id,
+      ownerName: accountOpenedItem.ownerName,
+      balance: creditAmount - debitAmount,
+      isOverdrawn: creditAmount - debitAmount < 0,
+      openedAt: Date.parse(accountOpenedItem.time),
+      transactions: transactionEvents,
+    }
 
     res.json(account)
   } catch (err) {
