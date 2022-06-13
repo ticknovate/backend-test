@@ -1,6 +1,7 @@
 import express from 'express'
 import { expressErrorHandler } from './lib/errorHandling'
-import { loadEvents } from './lib/events'
+import { loadEvents, saveEvents } from './lib/events'
+import { accountOpenedEvent } from './shared/utils'
 import { IBankAccount } from './types'
 
 export const app = express()
@@ -43,4 +44,21 @@ app.get('/accounts/:id', async (req, res, next) => {
   }
 })
 
+app.post('/accounts/:id', async (req, res, next) => {
+  const { name } = req.body
+
+  try {
+    const events = await loadEvents(req.params.id)
+    console.log(events)
+    const accountOpenedItem = accountOpenedEvent(events)
+    console.log(accountOpenedItem)
+    accountOpenedItem.ownerName = name
+
+    const updatedEvents = [accountOpenedItem]
+    await saveEvents(updatedEvents, true)
+    res.send(name)
+  } catch (err) {
+    next(err)
+  }
+})
 app.use(expressErrorHandler)

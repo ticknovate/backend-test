@@ -60,6 +60,9 @@ interface IBankAccountTransaction {
  */
 export type BankAccountEvent = BankAccountEventBase & IBankAccountEventShared
 
+export type BankAccountOpenEvent = IAccountOpenedEventBase &
+  IBankAccountEventShared
+
 /**
  * A "bank account" event.
  *
